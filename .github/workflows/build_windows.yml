@@ -19,15 +19,13 @@ jobs:
           libusb1.0,
           libusb1.0-devel
 
-    # - run: cygcheck -c cygwin; cygcheck -l cygwin | wc -l
-    # - run: pwd.exe; find /usr/include
-
     - run: bash build_for_windows.sh
 
-    - run: find .
+    - name: Check artifacts
+      run: ls -l xvcd-pico.exe cygusb-1.0.dll cygwin1.dll
 
     - name: archive production artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v3.1.2
       with:
         name: xvcd-pico
         path: |
