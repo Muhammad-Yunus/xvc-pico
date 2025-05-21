@@ -28,7 +28,7 @@
 #include <sys/types.h>
 
 // #define BUFFER_SIZE 1024 * 1024  // is super fast but doesn't work on ebaz4205 board ;(
-#define BUFFER_SIZE 1024 * 20 // NOTE: Reduce this in case of flashing problems!
+#define BUFFER_SIZE 1024 * 2 // NOTE: Reduce this in case of flashing problems!
 
 #ifdef __CYGWIN__
 #include <libusb-1.0/libusb.h>
@@ -408,7 +408,8 @@ int main() {
   address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(2542);
   address.sin_family = AF_INET;
-  fprintf(stderr, "socket use %s:2542!\n", inet_ntoa((struct in_addr){ htonl(INADDR_ANY) }));
+  struct in_addr addr = { htonl(INADDR_ANY) };
+  fprintf(stderr, "socket use %s:2542!\n", inet_ntoa(addr));
 
   if (bind(s, (struct sockaddr *)&address, sizeof(address)) < 0) {
     perror("bind");
