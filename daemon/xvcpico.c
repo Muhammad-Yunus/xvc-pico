@@ -146,7 +146,7 @@ int device_init() {
       goto out;
     if (desc.idVendor == XVCPICO_VID && desc.idProduct == XVCPICO_PID) {
       found = dev;
-       fprintf(stderr, "found usb device!");
+       fprintf(stderr, "found usb device!\n");
       break;
     }
   }
@@ -181,7 +181,7 @@ out:
   size = libusb_get_max_iso_packet_size(dev, XVCPICO_WRITE_EP);
 
   //  fprintf(stderr, "write ep size = %d\n", size);
-   fprintf(stderr, "success initialize usb device!");
+   fprintf(stderr, "success initialize usb device!\n");
   return size;  // success
 }
 
@@ -215,7 +215,7 @@ int gpio_write(int tck, int tms, int tdi) {
   return 0;
 }
 
-static int verbose = 0;
+static int verbose = 1;
 
 static int sread(int fd, void *target, int len) {
   unsigned char *t = target;
@@ -402,23 +402,27 @@ int main() {
     device_close();
     return 1;
   }
+  fprintf(stderr, "socket initialized!\n");
   i = 1;
   setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &i, sizeof i);
   address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(2542);
   address.sin_family = AF_INET;
+  fprintf(stderr, "socket use %s:2542!\n", inet_ntoa((struct in_addr){ htonl(INADDR_ANY) }));
 
   if (bind(s, (struct sockaddr *)&address, sizeof(address)) < 0) {
     perror("bind");
     device_close();
     return 1;
   }
+  fprintf(stderr, "socket opened on above ip port!\n");
 
   if (listen(s, 0) < 0) {
     perror("listen");
     device_close();
     return 1;
   }
+  fprintf(stderr, "socket listening!\n");
 
   fd_set conn;
   int maxfd = 0;
