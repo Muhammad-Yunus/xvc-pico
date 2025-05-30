@@ -215,7 +215,7 @@ int gpio_write(int tck, int tms, int tdi) {
   return 0;
 }
 
-static int verbose = 1;
+static int verbose = 0;
 
 static int sread(int fd, void *target, int len) {
   unsigned char *t = target;
@@ -402,28 +402,28 @@ int main() {
     device_close();
     return 1;
   }
-  fprintf(stderr, "socket initialized!\n");
+  //fprintf(stderr, "socket initialized!\n");
   i = 1;
   setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &i, sizeof i);
   address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(2542);
   address.sin_family = AF_INET;
-  struct in_addr addr = { htonl(INADDR_ANY) };
-  fprintf(stderr, "socket use %s:2542!\n", inet_ntoa(addr));
+  //struct in_addr addr = { htonl(INADDR_ANY) };
+  //fprintf(stderr, "socket use %s:2542!\n", inet_ntoa(addr));
 
   if (bind(s, (struct sockaddr *)&address, sizeof(address)) < 0) {
     perror("bind");
     device_close();
     return 1;
   }
-  fprintf(stderr, "socket opened on above ip port!\n");
+  //fprintf(stderr, "socket opened on above ip port!\n");
 
   if (listen(s, 0) < 0) {
     perror("listen");
     device_close();
     return 1;
   }
-  fprintf(stderr, "socket listening!\n");
+  //fprintf(stderr, "socket listening!\n");
 
   fd_set conn;
   int maxfd = 0;
