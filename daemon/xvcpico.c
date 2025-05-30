@@ -28,7 +28,7 @@
 #include <sys/types.h>
 
 // #define BUFFER_SIZE 1024 * 1024  // is super fast but doesn't work on ebaz4205 board ;(
-#define BUFFER_SIZE 1024 * 10 // NOTE: Reduce this in case of flashing problems!
+#define BUFFER_SIZE 1024 * 20 // NOTE: Reduce this in case of flashing problems!
 
 #ifdef __CYGWIN__
 #include <libusb-1.0/libusb.h>
@@ -94,7 +94,7 @@ void gpio_send(_Bool header, uint32_t len, uint32_t n, uint8_t *tms, uint8_t *td
   actual_length = 0;
   ret = libusb_bulk_transfer(dev_handle, XVCPICO_WRITE_EP, tx_buffer, header_offset, &actual_length, 1000);
   if ((ret < 0) || (actual_length != header_offset)) {
-     fprintf(stderr, "gpio_xfer_full: usb bulk write failed!\n");
+    printf("gpio_xfer_full: usb bulk write failed!\n");
     return;
   }
 }
@@ -110,8 +110,8 @@ void gpio_recieve(uint32_t n, uint8_t *tdo) {
     // DirtyJTAG USB -> [32597.543687] usb 3-2.3.1: new full-speed USB device number 81 using xhci_hcd
     ret = libusb_bulk_transfer(dev_handle, XVCPICO_READ_EP, result, bytes, &actual_length, 2000);
     if (ret < 0) {
-       fprintf(stderr, "gpio_xfer_full: usb bulk read failed!\n");
-       fprintf(stderr, "[Total Bytes] %d, [Return Code] %d [Actual Length] %d\n", bytes, ret, actual_length);
+      printf("gpio_xfer_full: usb bulk read failed!\n");
+      printf("[Total Bytes] %d, [Return Code] %d [Actual Length] %d\n", bytes, ret, actual_length);
       return;
     }
   } while (actual_length == 0);
@@ -131,7 +131,7 @@ int device_init() {
   int r;
 
   if (libusb_init(&usb_ctx) < 0) {
-     fprintf(stderr, "[ERROR] libusb init failed!\n");
+    printf("[ERROR] libusb init failed!\n");
     return -1;
   }
 
@@ -146,7 +146,6 @@ int device_init() {
       goto out;
     if (desc.idVendor == XVCPICO_VID && desc.idProduct == XVCPICO_PID) {
       found = dev;
-       fprintf(stderr, "found usb device!\n");
       break;
     }
   }
@@ -154,7 +153,7 @@ int device_init() {
   if (found) {
     r = libusb_open(found, &dev_handle);
     if (r < 0) {
-       fprintf(stderr, "[ERROR in libusb_open()] %s\n", libusb_error_name(r));
+      printf("[ERROR in libusb_open()] %s\n", libusb_error_name(r));
       dev_handle = NULL;
     }
   }
@@ -163,14 +162,14 @@ out:
   libusb_free_device_list(devs, 1);
 
   if (!dev_handle) {
-     fprintf(stderr, "[ERROR] failed to open usb device!\n");
+    printf("[ERROR] failed to open usb device!\n");
     libusb_exit(usb_ctx);
     return -1;
   }
   ret = libusb_claim_interface(dev_handle, XVCPICO_INTF);
   if (ret) {
-     fprintf(stderr, "[ERROR in libusb_claim_interface()] %s\n", libusb_error_name(ret));
-     fprintf(stderr, "[!] libusb error while claiming XvcPico interface\n");
+    printf("[ERROR in libusb_claim_interface()] %s\n", libusb_error_name(ret));
+    printf("[!] libusb error while claiming XvcPico interface\n");
     libusb_close(dev_handle);
     libusb_exit(usb_ctx);
     return -1;
@@ -180,8 +179,8 @@ out:
   int size;
   size = libusb_get_max_iso_packet_size(dev, XVCPICO_WRITE_EP);
 
-  //  fprintf(stderr, "write ep size = %d\n", size);
-   fprintf(stderr, "success initialize usb device!\n");
+  // printf("write ep size = %d\n", size);
+
   return size;  // success
 }
 
@@ -208,7 +207,7 @@ int gpio_write(int tck, int tms, int tdi) {
   buf[buffer_idx++] = CMD_STOP;
   int ret = libusb_bulk_transfer(dev_handle, XVCPICO_WRITE_EP, buf, buffer_idx, &actual_length, 1000);
   if (ret < 0) {
-     fprintf(stderr, "gpio_write: usb bulk write failed\n");
+    printf("gpio_write: usb bulk write failed\n");
     return -EXIT_FAILURE;
   }
 
@@ -250,8 +249,8 @@ int handle_data(int fd, int ep_size) {
         return 1;
       }
       if (verbose) {
-         fprintf(stderr, "%u : Received command: 'getinfo'\n", (int)time(NULL));
-         fprintf(stderr, "\t Replied with %s\n", xvcInfo);
+        printf("%u : Received command: 'getinfo'\n", (int)time(NULL));
+        printf("\t Replied with %s\n", xvcInfo);
       }
       break;
     } else if (memcmp(cmd, "se", 2) == 0) {
@@ -263,27 +262,27 @@ int handle_data(int fd, int ep_size) {
         return 2;
       }
       if (verbose) {
-         fprintf(stderr, "%u : Received command: 'settck'\n", (int)time(NULL));
-         fprintf(stderr, "\t Replied with '%.*s'\n\n", 4, cmd + 5);
+        printf("%u : Received command: 'settck'\n", (int)time(NULL));
+        printf("\t Replied with '%.*s'\n\n", 4, cmd + 5);
       }
       break;
     } else if (memcmp(cmd, "de", 2) == 0) {  // DEBUG CODE
       if (sread(fd, cmd, 3) != 1)
         return 1;
-       fprintf(stderr, "%u : Received command: 'debug'\n", (int)time(NULL));
+      printf("%u : Received command: 'debug'\n", (int)time(NULL));
       gpio_write(1, 1, 1);
       break;
     } else if (memcmp(cmd, "of", 2) == 0) {  // DEBUG CODE
       if (sread(fd, cmd, 1) != 1)
         return 1;
-       fprintf(stderr, "%u : Received command: 'off'\n", (int)time(NULL));
+      printf("%u : Received command: 'off'\n", (int)time(NULL));
       gpio_write(0, 0, 0);
       break;
     } else if (memcmp(cmd, "sh", 2) == 0) {
       if (sread(fd, cmd, 4) != 1)
         return 1;
       if (verbose) {
-         fprintf(stderr, "%u : Received command: 'shift'\n", (int)time(NULL));
+        printf("%u : Received command: 'shift'\n", (int)time(NULL));
       }
     } else {
       fprintf(stderr, "invalid cmd '%s'\n", cmd);
@@ -309,9 +308,9 @@ int handle_data(int fd, int ep_size) {
     memset(result, 0, nr_bytes);
 
     if (verbose) {
-       fprintf(stderr, "\tNumber of Bits  : %d\n", len);
-       fprintf(stderr, "\tNumber of Bytes : %d \n", nr_bytes);
-       fprintf(stderr, "\n");
+      printf("\tNumber of Bits  : %d\n", len);
+      printf("\tNumber of Bytes : %d \n", nr_bytes);
+      printf("\n");
     }
 
     // Note
@@ -388,7 +387,7 @@ int main() {
   struct sockaddr_in address;
 
   // Init
-  printf(xvcInfo, "xvcServer_v1.0:%d\n", BUFFER_SIZE);
+  sprintf(xvcInfo, "xvcServer_v1.0:%d\n", BUFFER_SIZE);
   int ep_size = device_init();
   if (ep_size < 0) {
     return -1;
@@ -402,28 +401,23 @@ int main() {
     device_close();
     return 1;
   }
-  //fprintf(stderr, "socket initialized!\n");
   i = 1;
   setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &i, sizeof i);
   address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(2542);
   address.sin_family = AF_INET;
-  //struct in_addr addr = { htonl(INADDR_ANY) };
-  //fprintf(stderr, "socket use %s:2542!\n", inet_ntoa(addr));
 
   if (bind(s, (struct sockaddr *)&address, sizeof(address)) < 0) {
     perror("bind");
     device_close();
     return 1;
   }
-  //fprintf(stderr, "socket opened on above ip port!\n");
 
   if (listen(s, 0) < 0) {
     perror("listen");
     device_close();
     return 1;
   }
-  //fprintf(stderr, "socket listening!\n");
 
   fd_set conn;
   int maxfd = 0;
@@ -448,7 +442,7 @@ int main() {
 
           newfd = accept(s, (struct sockaddr *)&address, &nsize);
           if (verbose)
-            fprintf(stderr, "connection accepted - fd %d\n", newfd);
+            printf("connection accepted - fd %d\n", newfd);
           if (newfd < 0) {
             perror("accept");
           } else {
@@ -463,13 +457,13 @@ int main() {
           }
         } else if (handle_data(fd, ep_size)) {
           if (verbose)
-            fprintf(stderr, "connection closed - fd %d\n", fd);
+            printf("connection closed - fd %d\n", fd);
           close(fd);
           FD_CLR(fd, &conn);
         }
       } else if (FD_ISSET(fd, &except)) {
         if (verbose)
-          fprintf(stderr, "connection aborted - fd %d\n", fd);
+          printf("connection aborted - fd %d\n", fd);
         close(fd);
         FD_CLR(fd, &conn);
         if (fd == s)
